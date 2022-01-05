@@ -591,6 +591,16 @@ static void draw_game_status_bar(runtime_stats_t stats)
     odroid_overlay_draw_battery(width - 26, 3);
 }
 
+
+int is_watch_on = 0;
+void watch_on_off(void){
+    if (is_watch_on == 0){
+        is_watch_on = 1;
+    }else{
+        is_watch_on = 0;
+    }
+}
+
 int odroid_overlay_game_settings_menu(odroid_dialog_choice_t *extra_options)
 {
     char speedup_value[8];
@@ -650,6 +660,7 @@ int odroid_overlay_game_menu(odroid_dialog_choice_t *extra_options)
 #endif
         {40, "Options", "", 1, NULL},
         // {50, "Tools", "", 1, NULL},
+        {60, "Watch ON/OFF", "", 1, NULL},
         {90, "Power off", "", 1, NULL},
         {100, "Quit to menu", "", 1, NULL},
         ODROID_DIALOG_CHOICE_LAST
@@ -677,6 +688,7 @@ int odroid_overlay_game_menu(odroid_dialog_choice_t *extra_options)
         case 30: odroid_system_emu_load_state(0); break; // TODO: Reload emulator?
         case 40: odroid_overlay_game_settings_menu(extra_options); break;
         case 50: odroid_overlay_game_debug_menu(); break;
+        case 60: watch_on_off(); break;
         case 90: odroid_system_sleep(); break;
         case 100: odroid_system_switch_app(0); break;
     }

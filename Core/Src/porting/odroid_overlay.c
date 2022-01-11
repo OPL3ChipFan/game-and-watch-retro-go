@@ -592,13 +592,9 @@ static void draw_game_status_bar(runtime_stats_t stats)
 }
 
 
-int is_watch_on = 0;
+bool is_watch_on = false;
 void watch_on_off(void){
-    if (is_watch_on == 0){
-        is_watch_on = 1;
-    }else{
-        is_watch_on = 0;
-    }
+    is_watch_on = !is_watch_on;
 }
 
 int odroid_overlay_game_settings_menu(odroid_dialog_choice_t *extra_options)

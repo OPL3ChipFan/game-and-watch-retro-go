@@ -954,87 +954,93 @@ static const uint8_t IMG_N9[] = {
 };
 
 
-extern int8_t GW_GetCurrentHour(void);
+extern uint8_t GW_GetCurrentHour(void);
 extern uint8_t GW_GetCurrentMinute(void);
+extern uint8_t GW_GetCurrentYear(void);
+extern uint8_t GW_GetCurrentMonth(void);
+extern uint8_t GW_GetCurrentDay(void);
+extern uint8_t GW_GetCurrentWeekday(void);
+
+extern uint8_t font8x8_basic[128][8];
 
 int8_t watch_num;
 
-static void draw_watch_img(pixel_t *fb, const uint8_t *img, uint16_t x, uint16_t y){
+static void draw_watch_img(pixel_t *fb, const uint8_t *img, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t xscale, uint8_t yscale, uint8_t direction){
     uint16_t idx = 0;
-    for(uint8_t i=0; i < 60; i++) {
-        for(uint8_t j=0; j < 48; j++) {
+    uint16_t tmp_idx = 0;
+    for(uint8_t i=0; i < h; i++) {
+        tmp_idx = idx;
+        for(uint8_t ysi=1; ysi <= yscale; ysi++){
+        idx = tmp_idx;
+        for(uint8_t j=0; j < w; j++) {
             if(img[idx / 8] & (1 << (7 - idx % 8))){
-                fb[x + j +  GW_LCD_WIDTH * (y + i)] = OVERLAY_COLOR_565;
+                for(uint8_t xsi=1; xsi <= xscale; xsi++){
+                if (direction == 0){
+                    fb[x + ((w - 1 - j) * xscale) + (xsi - 1) +  GW_LCD_WIDTH * (y + (i * yscale) + (ysi - 1))] = OVERLAY_COLOR_565;
+                }else{
+                    fb[x + (j * xscale) + (xsi - 1) + GW_LCD_WIDTH * (y + (i * yscale) + (ysi - 1))] = OVERLAY_COLOR_565;
+                }
+            }
             }
             idx++;
+        }
         }
     }
 }
 
+static const uint8_t *TIME_DIGITS[] = {IMG_N0, IMG_N1, IMG_N2, IMG_N3, IMG_N4, IMG_N5, IMG_N6, IMG_N7, IMG_N8, IMG_N9};
+
 static void draw_watch_time_number(pixel_t *fb, uint8_t number, uint16_t x, uint16_t y){
+
+    draw_watch_img(fb, TIME_DIGITS[number], x, y, 48, 60, 1, 1, 1);
+
+}
+
+static void draw_watch_date_number(pixel_t *fb, uint8_t number, uint16_t x, uint16_t y){
 
     switch(watch_num)
     {
         case 0:
-            draw_watch_img(fb, IMG_N0, x, y);
+            draw_watch_img(fb, font8x8_basic[48], x, y, 8, 8, 2, 3, 0);
             break;
         case 1:
-            draw_watch_img(fb, IMG_N1, x, y);
+            draw_watch_img(fb, font8x8_basic[49], x, y, 8, 8, 2, 3, 0);
             break;
         case 2:
-            draw_watch_img(fb, IMG_N2, x, y);
+            draw_watch_img(fb, font8x8_basic[50], x, y, 8, 8, 2, 3, 0);
             break;
         case 3:
-            draw_watch_img(fb, IMG_N3, x, y);
+            draw_watch_img(fb, font8x8_basic[51], x, y, 8, 8, 2, 3, 0);
             break;
         case 4:
-            draw_watch_img(fb, IMG_N4, x, y);
+            draw_watch_img(fb, font8x8_basic[52], x, y, 8, 8, 2, 3, 0);
             break;
         case 5:
-            draw_watch_img(fb, IMG_N5, x, y);
+            draw_watch_img(fb, font8x8_basic[53], x, y, 8, 8, 2, 3, 0);
             break;
         case 6:
-            draw_watch_img(fb, IMG_N6, x, y);
+            draw_watch_img(fb, font8x8_basic[54], x, y, 8, 8, 2, 3, 0);
             break;
         case 7:
-            draw_watch_img(fb, IMG_N7, x, y);
+            draw_watch_img(fb, font8x8_basic[55], x, y, 8, 8, 2, 3, 0);
             break;
         case 8:
-            draw_watch_img(fb, IMG_N8, x, y);
+            draw_watch_img(fb, font8x8_basic[56], x, y, 8, 8, 2, 3, 0);
             break;
         case 9:
-            draw_watch_img(fb, IMG_N9, x, y);
+            draw_watch_img(fb, font8x8_basic[57], x, y, 8, 8, 2, 3, 0);
             break;
     }
 
-}
 
+}
 
 static void draw_watch_rectangle(pixel_t *fb, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2){
     for(uint16_t i=y1; i < y2; i++){
         for(uint16_t j=x1; j < x2; j++){
-            fb[j + GW_LCD_WIDTH * i] = OVERLAY_COLOR_565;
+            fb[j + GW_LCD_WIDTH * i] = 0xFFFF - fb[j + GW_LCD_WIDTH * i];
         }
     }
-}
-
-// Draw the watch graphics now...
-static void draw_watch(pixel_t *fb, uint8_t style, uint16_t x, uint16_t y){
-    
-    watch_num = GW_GetCurrentHour() / 10;
-    draw_watch_time_number(fb, watch_num, x, y);
-    
-    watch_num = GW_GetCurrentHour() % 10;
-    draw_watch_time_number(fb, watch_num, x + 64, y);
-
-    draw_watch_rectangle(fb, x + 64 + 60, 26, x + 64 + 64 + 4, 40);
-    draw_watch_rectangle(fb, x + 64 + 60, 50, x + 64 + 64 + 4, 64);
-
-    watch_num = GW_GetCurrentMinute() / 10;
-    draw_watch_time_number(fb, watch_num, x + 64 + 64 + 16, y);
-
-    watch_num = GW_GetCurrentMinute() % 10;
-    draw_watch_time_number(fb, watch_num, x + 64 + 64 + 16 + 64, y);
 }
 
 __attribute__((optimize("unroll-loops")))
@@ -1115,6 +1121,186 @@ static void draw_darken_rounded_rectangle(pixel_t *fb, uint16_t x1, uint16_t y1,
         darken_pixel(&fb[ i + GW_LCD_WIDTH * (y2 - j - 1)]);
 }
 
+
+
+
+
+// Draw the watch graphics now...
+static void draw_watch(pixel_t *fb, uint8_t style, uint16_t x, uint16_t y){
+
+    draw_darken_rounded_rectangle(fb, 28, 0, 320, 110);
+    
+    watch_num = GW_GetCurrentHour() / 10;
+    draw_watch_time_number(fb, watch_num, x, y);
+    
+    watch_num = GW_GetCurrentHour() % 10;
+    draw_watch_time_number(fb, watch_num, x + 64, y);
+
+    draw_watch_rectangle(fb, x + 64 + 60, 26, x + 64 + 64 + 4, 40);
+    draw_watch_rectangle(fb, x + 64 + 60, 50, x + 64 + 64 + 4, 64);
+
+    watch_num = GW_GetCurrentMinute() / 10;
+    draw_watch_time_number(fb, watch_num, x + 64 + 64 + 16, y);
+
+    watch_num = GW_GetCurrentMinute() % 10;
+    draw_watch_time_number(fb, watch_num, x + 64 + 64 + 16 + 64, y);
+
+
+    watch_num = 2;
+    draw_watch_date_number(fb, watch_num, x, y + 64);
+
+    watch_num = 0;
+    draw_watch_date_number(fb, watch_num, x + 20, y + 64);
+
+    watch_num = GW_GetCurrentYear() / 10 % 10;
+    draw_watch_date_number(fb, watch_num, x + 40, y + 64);
+
+    watch_num = GW_GetCurrentYear() % 10;
+    draw_watch_date_number(fb, watch_num, x + 60, y + 64);
+
+    watch_num = GW_GetCurrentMonth();
+
+    switch(watch_num)
+    {
+        // Jan
+        case 1:
+            draw_watch_img(fb, font8x8_basic[0x4a], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x61], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x6e], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Feb
+        case 2:
+            draw_watch_img(fb, font8x8_basic[0x46], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x65], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x62], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Mar
+        case 3:
+            draw_watch_img(fb, font8x8_basic[0x4d], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x61], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x72], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Apr
+        case 4:
+            draw_watch_img(fb, font8x8_basic[0x41], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x70], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x6c], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // May
+        case 5:
+            draw_watch_img(fb, font8x8_basic[0x4d], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x61], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x79], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Jun
+        case 6:
+            draw_watch_img(fb, font8x8_basic[0x4a], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x75], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x6e], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Jul
+        case 7:
+            draw_watch_img(fb, font8x8_basic[0x4a], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x75], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x70], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Aug
+        case 8:
+            draw_watch_img(fb, font8x8_basic[0x41], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x75], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x67], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Sep
+        case 9:
+            draw_watch_img(fb, font8x8_basic[0x4a], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x75], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x65], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Oct
+        case 10:
+            draw_watch_img(fb, font8x8_basic[0x4f], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x63], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x74], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Nov
+        case 11:
+            draw_watch_img(fb, font8x8_basic[0x4e], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x6f], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x76], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+        // Dec
+        case 12:
+            draw_watch_img(fb, font8x8_basic[0x44], x + 80, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x75], x + 100, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x63], x + 120, y + 64, 8, 8, 2, 3, 0);
+            break;
+
+    }
+
+    watch_num = GW_GetCurrentDay() / 10;
+    draw_watch_date_number(fb, watch_num, x + 140, y + 64);
+
+    watch_num = GW_GetCurrentDay() % 10;
+    draw_watch_date_number(fb, watch_num, x + 160, y + 64);
+
+    watch_num = GW_GetCurrentWeekday() % 10;
+
+
+    switch(watch_num)
+    {
+        case 0:
+            draw_watch_img(fb, font8x8_basic[0x53], x + 200, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x75], x + 220, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x6e], x + 240, y + 64, 8, 8, 2, 3, 0);
+            break;
+        case 1:
+            draw_watch_img(fb, font8x8_basic[0x4d], x + 200, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x6f], x + 220, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x6e], x + 240, y + 64, 8, 8, 2, 3, 0);
+            break;
+        case 2:
+            draw_watch_img(fb, font8x8_basic[0x54], x + 200, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x75], x + 220, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x65], x + 240, y + 64, 8, 8, 2, 3, 0);
+            break;
+        case 3:
+            draw_watch_img(fb, font8x8_basic[0x57], x + 200, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x65], x + 220, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x64], x + 240, y + 64, 8, 8, 2, 3, 0);
+            break;
+        case 4:
+            draw_watch_img(fb, font8x8_basic[0x54], x + 200, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x68], x + 220, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x75], x + 240, y + 64, 8, 8, 2, 3, 0);
+            break;
+        case 5:
+            draw_watch_img(fb, font8x8_basic[0x46], x + 200, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x72], x + 220, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x69], x + 240, y + 64, 8, 8, 2, 3, 0);
+            break;
+        case 6:
+            draw_watch_img(fb, font8x8_basic[0x53], x + 200, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x61], x + 220, y + 64, 8, 8, 2, 3, 0);
+            draw_watch_img(fb, font8x8_basic[0x74], x + 240, y + 64, 8, 8, 2, 3, 0);
+            break;
+    }
+
+
+
+
+}
+
 #define INGAME_OVERLAY_X 265
 #define INGAME_OVERLAY_Y 10
 #define INGAME_OVERLAY_BARS_H 128
@@ -1148,7 +1334,7 @@ static uint8_t box_height(uint8_t n) {
     return ((INGAME_OVERLAY_BARS_IMG_Y - INGAME_OVERLAY_BOX_Y) / n) - INGAME_OVERLAY_BOX_GAP;
 }
 
-extern int is_watch_on;
+extern bool is_watch_on;
 void common_ingame_overlay(void) {
     rg_app_desc_t *app = odroid_system_get_app();
     pixel_t *fb = lcd_get_active_buffer();

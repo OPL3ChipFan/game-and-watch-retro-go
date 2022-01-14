@@ -328,6 +328,7 @@ void emulator_show_file_info(retro_emulator_file_t *file)
     odroid_overlay_dialog("Properties", choices, -1);
 }
 
+extern int inputrec_state;
 void emulator_show_file_menu(retro_emulator_file_t *file)
 {
     // char *save_path = odroid_system_get_path(ODROID_PATH_SAVE_STATE, emu_get_file_path(file));
@@ -350,6 +351,8 @@ void emulator_show_file_menu(retro_emulator_file_t *file)
 #if STATE_SAVING == 1
         {2, "Delete save ", "", has_save || has_sram, NULL},
 #endif
+        {5, "Start Record ", "", 1, NULL},
+        {6, "Start Playback ", "", 1, NULL},
         ODROID_DIALOG_CHOICE_LAST
     };
     int sel = odroid_overlay_dialog(NULL, choices, has_save ? 0 : 1);
@@ -368,6 +371,18 @@ void emulator_show_file_menu(retro_emulator_file_t *file)
         //     favorite_remove(file);
         // else
         //     favorite_add(file);
+    }
+    else if (sel == 5) {
+        inputrec_state = 1;
+        gui_save_current_tab();
+        emulator_start(file, sel == 0, false);
+
+    }
+    else if (sel == 6) {
+        inputrec_state = 2;
+        gui_save_current_tab();
+        emulator_start(file, sel == 0, false);
+
     }
 
     // free(save_path);

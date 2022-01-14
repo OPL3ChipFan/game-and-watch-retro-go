@@ -597,6 +597,19 @@ void watch_on_off(void){
     is_watch_on = !is_watch_on;
 }
 
+extern int inputrec_state;
+extern uint8_t input_records[8 * 1024];
+
+extern uint8_t inputrec_buffer[8 * 1024];
+
+void stop_recording(void){
+    if (inputrec_state == 1){
+        inputrec_state = 0;
+        store_save((uint8_t *) input_records, (uint8_t *) inputrec_buffer, sizeof(input_records));
+        odroid_system_switch_app(0);
+    }
+}
+
 int odroid_overlay_game_settings_menu(odroid_dialog_choice_t *extra_options)
 {
     char speedup_value[8];
@@ -657,6 +670,7 @@ int odroid_overlay_game_menu(odroid_dialog_choice_t *extra_options)
         {40, "Options", "", 1, NULL},
         // {50, "Tools", "", 1, NULL},
         {60, "Watch ON/OFF", "", 1, NULL},
+        {70, "Stop Recording", "", 1, NULL},
         {90, "Power off", "", 1, NULL},
         {100, "Quit to menu", "", 1, NULL},
         ODROID_DIALOG_CHOICE_LAST
@@ -685,6 +699,7 @@ int odroid_overlay_game_menu(odroid_dialog_choice_t *extra_options)
         case 40: odroid_overlay_game_settings_menu(extra_options); break;
         case 50: odroid_overlay_game_debug_menu(); break;
         case 60: watch_on_off(); break;
+        case 70: stop_recording(); break;
         case 90: odroid_system_sleep(); break;
         case 100: odroid_system_switch_app(0); break;
     }

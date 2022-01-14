@@ -20,6 +20,12 @@ uint16_t framebuffer_capture[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((secti
 
 static void set_ingame_overlay(ingame_overlay_t type);
 
+uint8_t input_records[8 * 1024]  __attribute__((section (".inputrec"))) __attribute__((aligned(4096)));
+
+uint8_t inputrec_buffer[8 * 1024];
+
+int inputrec_fcounter = 0;
+int inputrec_state = 0;
 cpumon_stats_t cpumon_stats = {0};
 
 uint32_t audioBuffer[AUDIO_BUFFER_LENGTH];
@@ -1345,7 +1351,7 @@ void common_ingame_overlay(void) {
     switch(common_emu_state.overlay)
     {
         case INGAME_OVERLAY_NONE:
-            if (is_watch_on == 1){
+            if (is_watch_on){
                 draw_watch(fb, 0, 50, 16);
             }
             break;

@@ -55,3 +55,5 @@ print_usage flash    __FLASH_LENGTH__
 print_usage extflash __EXTFLASH_LENGTH__
 print_usage saveflash __SAVEFLASH_LENGTH__
 print_usage fbflash __FBFLASH_LENGTH__
+
+print_usage inputrec __INPUTREC_LENGTH__

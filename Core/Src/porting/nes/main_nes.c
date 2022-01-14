@@ -30,6 +30,16 @@ static bool autoload = false;
 // if i counted correctly this should max be 23077
 uint8_t nes_save_buffer[24000];
 
+
+
+
+
+
+extern uint8_t input_records[8 * 1024];
+extern uint8_t inputrec_buffer[8 * 1024];
+extern int inputrec_fcounter;
+extern int inputrec_state;
+
 // TODO: Expose properly
 extern int nes_state_save(uint8_t *flash_ptr, size_t size);
 
@@ -451,7 +461,11 @@ void osd_getinput(void)
         old_pad0 = pad0;
     }
 #endif
-
+    if (inputrec_state == 1){
+        input_records[inputrec_fcounter] = pad0;
+    }else if (inputrec_state == 2){
+        pad0 = inputrec_buffer[inputrec_fcounter];
+    }
     input_update(INP_JOYPAD0, pad0);
 }
 

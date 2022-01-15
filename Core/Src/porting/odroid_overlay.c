@@ -598,9 +598,9 @@ void watch_on_off(void){
 }
 
 extern int inputrec_state;
-extern uint8_t input_records[8 * 1024];
+extern uint8_t input_records[GW_LCD_WIDTH * GW_LCD_HEIGHT];
 
-extern uint8_t inputrec_buffer[8 * 1024];
+extern uint8_t inputrec_buffer[8192];
 
 void stop_recording(void){
     if (inputrec_state == 1){

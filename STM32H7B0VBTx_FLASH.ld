@@ -88,7 +88,6 @@ __RAM_EMU_END__     = __RAM_EMU_START__ + __RAM_EMU_LENGTH__;
 INCLUDE build/saveflash.ld
 __CONFIGFLASH_LENGTH__ = 4096;
 __FBFLASH_LENGTH__ = ENABLE_SCREENSHOT ? ((320 * 240 * 2 + 4095) / 4096) * 4096 : 0;
-__INPUTREC_LENGTH__ = 8 * 1024;
 
 /****
  * External Flash Layout
@@ -118,7 +117,7 @@ __INPUTREC_LENGTH__ = 8 * 1024;
  *            |                                  |
  *            +----------------------------------+  __FBFLASH_END__
  */
-__EXTFLASH_LENGTH__ = __EXTFLASH_TOTAL_LENGTH__ - (__SAVEFLASH_LENGTH__ + __CONFIGFLASH_LENGTH__ + __FBFLASH_LENGTH__ + __INPUTREC_LENGTH__);
+__EXTFLASH_LENGTH__ = __EXTFLASH_TOTAL_LENGTH__ - (__SAVEFLASH_LENGTH__ + __CONFIGFLASH_LENGTH__ + __FBFLASH_LENGTH__);
 __EXTFLASH_END__ = __EXTFLASH_START__ + __EXTFLASH_LENGTH__;
 __SAVEFLASH_START__ = __EXTFLASH_END__;
 __SAVEFLASH_END__   = __SAVEFLASH_START__ + __SAVEFLASH_LENGTH__;
@@ -126,9 +125,6 @@ __CONFIGFLASH_START__ = __SAVEFLASH_END__;
 __CONFIGFLASH_END__   = __CONFIGFLASH_START__ + __CONFIGFLASH_LENGTH__;
 __FBFLASH_START__ = __CONFIGFLASH_END__;
 __FBFLASH_END__   = __FBFLASH_START__ + __FBFLASH_LENGTH__;
-
-__INPUTREC_START__ = __FBFLASH_END__;
-__INPUTREC_END__ = __INPUTREC_START__ + __INPUTREC_LENGTH__;
 
 
 __INTFLASH__ = DEFINED(__INTFLASH__) ? __INTFLASH__ : 0x08000000;
@@ -151,9 +147,6 @@ MEMORY
   SAVEFLASH(xr ) : ORIGIN = __SAVEFLASH_START__, LENGTH = __SAVEFLASH_LENGTH__
   CONFIGFLASH(xr ) : ORIGIN = __CONFIGFLASH_START__, LENGTH = __CONFIGFLASH_LENGTH__
   FBFLASH(xr ) : ORIGIN = __FBFLASH_START__, LENGTH = __FBFLASH_LENGTH__
-
-
-  INPUTREC(xr ) : ORIGIN = __INPUTREC_START__, LENGTH = __INPUTREC_LENGTH__
 }
 
 
@@ -389,14 +382,6 @@ SECTIONS
     *(.fbflash)
     __fbflash_end__ = .;
   } > FBFLASH
-
-    ._inputrec (NOLOAD):
-  {
-    . = ALIGN(4K);
-    __inputrec_start__ = .;
-    *(._inputrec)
-    __inputrec_end__ = .;
-  } > INPUTREC
 
   ._ram (NOLOAD) :
   {

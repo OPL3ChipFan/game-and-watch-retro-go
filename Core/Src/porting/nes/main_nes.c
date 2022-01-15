@@ -35,8 +35,8 @@ uint8_t nes_save_buffer[24000];
 
 
 
-extern uint8_t input_records[8 * 1024];
-extern uint8_t inputrec_buffer[8 * 1024];
+extern uint8_t input_records[GW_LCD_WIDTH * GW_LCD_HEIGHT];
+extern uint8_t inputrec_buffer[8192];
 extern int inputrec_fcounter;
 extern int inputrec_state;
 
@@ -462,9 +462,11 @@ void osd_getinput(void)
     }
 #endif
     if (inputrec_state == 1){
-        input_records[inputrec_fcounter] = pad0;
+        inputrec_buffer[inputrec_fcounter] = pad0;
+        inputrec_fcounter++;
     }else if (inputrec_state == 2){
-        pad0 = inputrec_buffer[inputrec_fcounter];
+        pad0 = input_records[inputrec_fcounter];
+        inputrec_fcounter++;
     }
     input_update(INP_JOYPAD0, pad0);
 }

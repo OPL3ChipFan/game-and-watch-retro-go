@@ -15,14 +15,14 @@
 #include "gw_linker.h"
 
 #if ENABLE_SCREENSHOT
-uint16_t framebuffer_capture[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((section (".fbflash"))) __attribute__((aligned(4096)));
+//uint16_t framebuffer_capture[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((section (".fbflash"))) __attribute__((aligned(4096)));
 #endif
 
 static void set_ingame_overlay(ingame_overlay_t type);
 
-uint8_t input_records[8 * 1024]  __attribute__((section (".inputrec"))) __attribute__((aligned(4096)));
+uint8_t input_records[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((section (".fbflash"))) __attribute__((aligned(4096)));
 
-uint8_t inputrec_buffer[8 * 1024];
+uint8_t inputrec_buffer[8192];
 
 int inputrec_fcounter = 0;
 int inputrec_state = 0;
@@ -169,7 +169,7 @@ void common_emu_input_loop(odroid_gamepad_state_t *joystick, odroid_dialog_choic
 #if ENABLE_SCREENSHOT
                 printf("Capturing screenshot...\n");
                 odroid_audio_mute(true);
-                store_save((uint8_t *) framebuffer_capture, lcd_get_inactive_buffer(), sizeof(framebuffer_capture));
+                //store_save((uint8_t *) framebuffer_capture, lcd_get_inactive_buffer(), sizeof(framebuffer_capture));
                 odroid_audio_mute(false);
                 printf("Screenshot captured\n");
 #else

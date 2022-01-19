@@ -36,9 +36,18 @@ uint8_t nes_save_buffer[24000];
 
 
 extern uint8_t input_records[GW_LCD_WIDTH * GW_LCD_HEIGHT];
-extern uint8_t inputrec_buffer[8192];
+extern uint8_t inputrec_buffer[4096];
+
+extern int inputrec_page;
+extern int inputrec_bufferidx;
 extern int inputrec_fcounter;
 extern int inputrec_state;
+extern int inputrec_idx;
+
+extern uint16 old_pad0;
+
+extern uint8_t rle_ctrl;
+extern uint8_t rle_dat;
 
 // TODO: Expose properly
 extern int nes_state_save(uint8_t *flash_ptr, size_t size);
@@ -426,12 +435,19 @@ static bool palette_update_cb(odroid_dialog_choice_t *option, odroid_dialog_even
    return event == ODROID_DIALOG_ENTER;
 }
 
+
+extern void set_ingame_overlay(ingame_overlay_t type);
+extern void draw_rectangle(pixel_t *fb, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 void osd_getinput(void)
 {
     uint16 pad0 = 0;
     char pal_name[16];
 
     wdog_refresh();
+
+    //TEMPTEST
+
+    pixel_t *fb = lcd_get_active_buffer();
 
     odroid_gamepad_state_t joystick;
     odroid_input_read_gamepad(&joystick);
@@ -461,12 +477,150 @@ void osd_getinput(void)
         old_pad0 = pad0;
     }
 #endif
+
+
+    
+
     if (inputrec_state == 1){
-        inputrec_buffer[inputrec_fcounter] = pad0;
+        // Input recording...
+
+        //inputrec_buffer[inputrec_fcounter] = pad0;
+        //inputrec_fcounter++;
+#if 0
+            if ((inputrec_bufferidx + 1) >= sizeof(inputrec_buffer)){
+                // Flush buffer to ExtFlash and reset buffer index.
+                // Write from input_records base address + size of used space.
+                
+                
+                
+                set_ingame_overlay(INGAME_OVERLAY_SAVE);
+
+
+
+                store_save((uint8_t *) input_records + (sizeof(inputrec_buffer) * inputrec_page), (uint8_t *) inputrec_buffer, sizeof(inputrec_buffer));
+                inputrec_page++;
+                inputrec_bufferidx = 0;
+            }else{
+                inputrec_bufferidx += 1;
+            }
+
+            inputrec_buffer[inputrec_bufferidx] = pad0;
+#endif
+#if 1
+
+        // If there is a new input state or RLE is full...
+        // At the beginning of the game, old_pad0 is 256 so it will be a new state.
+        if (inputrec_fcounter == 0){
+
+            inputrec_bufferidx = 0;
+
+            old_pad0 = pad0;
+            
+            rle_dat = pad0;
+            rle_ctrl = 1;
+            
+            inputrec_buffer[inputrec_bufferidx] = rle_ctrl;
+            inputrec_buffer[inputrec_bufferidx + 1] = rle_dat;
+
+
+
+        }else{
+        if ((pad0 != old_pad0) || (rle_ctrl == 255)){
+
+            old_pad0 = pad0;
+
+
+            /*
+            if (inputrec_page == 0){
+                set_ingame_overlay(INGAME_OVERLAY_SPEEDUP);
+            }else{
+                set_ingame_overlay(INGAME_OVERLAY_LOAD);
+            }
+            */
+            
+            // Check if the current buffer is full.
+            if ((inputrec_bufferidx + 2) >= sizeof(inputrec_buffer)){
+                // Flush buffer to ExtFlash and reset buffer index.
+                // Write from input_records base address + size of used space.
+                
+                
+                
+                set_ingame_overlay(INGAME_OVERLAY_SAVE);
+
+
+
+                store_save((uint8_t *) input_records + (sizeof(inputrec_buffer) * inputrec_page), (uint8_t *) inputrec_buffer, sizeof(inputrec_buffer));
+                inputrec_page++;
+                inputrec_bufferidx = 0;
+            }else{
+                inputrec_bufferidx += 2;
+            }
+
+            // Write new RLE data to buffer.
+            rle_dat = pad0;
+            rle_ctrl = 1;
+            
+            inputrec_buffer[inputrec_bufferidx] = rle_ctrl;
+            inputrec_buffer[inputrec_bufferidx + 1] = rle_dat;
+
+
+        }else{
+            old_pad0 = pad0;
+            // Just a repeated input state.
+            rle_ctrl++;
+            inputrec_buffer[inputrec_bufferidx] = rle_ctrl;
+
+        }
+        }
+#endif
         inputrec_fcounter++;
+
+
     }else if (inputrec_state == 2){
-        pad0 = input_records[inputrec_fcounter];
+        //pad0 = input_records[inputrec_fcounter];
+        //inputrec_fcounter++;
+#if 0
+            pad0 = input_records[inputrec_fcounter];
+#endif
+#if 1
+        if (inputrec_fcounter == 0){
+
+            //set_ingame_overlay(INGAME_OVERLAY_BRIGHTNESS);
+            inputrec_idx = 0;
+            rle_ctrl = input_records[inputrec_idx];
+            rle_dat = input_records[inputrec_idx + 1];
+
+            if (rle_ctrl <= 0){
+                set_ingame_overlay(INGAME_OVERLAY_VOLUME);
+            }
+
+            
+
+            pad0 = rle_dat;
+
+            rle_ctrl--;
+        }else{
+            // If the next RLE byte-pair is required...
+            if (rle_ctrl <= 0){
+                //set_ingame_overlay(INGAME_OVERLAY_LOAD);
+                inputrec_idx += 2;
+                rle_ctrl = input_records[inputrec_idx];
+            }
+            
+            rle_dat = input_records[inputrec_idx + 1];
+            
+            pad0 = rle_dat;
+
+            rle_ctrl--;
+
+        }
+#endif
         inputrec_fcounter++;
+        
+
+
+
+        
     }
     input_update(INP_JOYPAD0, pad0);
 }

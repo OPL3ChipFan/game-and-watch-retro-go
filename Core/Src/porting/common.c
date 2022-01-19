@@ -18,14 +18,25 @@
 //uint16_t framebuffer_capture[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((section (".fbflash"))) __attribute__((aligned(4096)));
 #endif
 
-static void set_ingame_overlay(ingame_overlay_t type);
+//static void set_ingame_overlay(ingame_overlay_t type);
+void set_ingame_overlay(ingame_overlay_t type);
 
 uint8_t input_records[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((section (".fbflash"))) __attribute__((aligned(4096)));
 
-uint8_t inputrec_buffer[8192];
+uint8_t inputrec_buffer[4096];
 
+int inputrec_page = 0;
+int inputrec_bufferidx = 0;
 int inputrec_fcounter = 0;
 int inputrec_state = 0;
+int inputrec_idx = 0;
+
+// In the first frame, pad0 != old_pad0
+uint16 old_pad0 = 256;
+
+uint8_t rle_ctrl = 0;
+uint8_t rle_dat = 0;
+
 cpumon_stats_t cpumon_stats = {0};
 
 uint32_t audioBuffer[AUDIO_BUFFER_LENGTH];
@@ -1070,7 +1081,8 @@ static inline void darken_pixel(pixel_t *p){
 }
 
 __attribute__((optimize("unroll-loops")))
-static void draw_rectangle(pixel_t *fb, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2){
+//static void draw_rectangle(pixel_t *fb, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2){
+void draw_rectangle(pixel_t *fb, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2){
     for(uint16_t i=y1; i < y2; i++){
         for(uint16_t j=x1; j < x2; j++){
             fb[j + GW_LCD_WIDTH * i] = OVERLAY_COLOR_565;
@@ -1354,6 +1366,18 @@ void common_ingame_overlay(void) {
             if (is_watch_on){
                 draw_watch(fb, 0, 50, 16);
             }
+
+            // Draw input recording progress bar.
+            if (inputrec_state == 1){
+                draw_rectangle(fb, 0, 230, (inputrec_bufferidx * 320 / sizeof(inputrec_buffer)) , 238);
+                draw_rectangle(fb, 0, 239, ((inputrec_bufferidx + sizeof(inputrec_buffer) * inputrec_page) * 320 / sizeof(input_records)) , 240);
+            }
+
+            // Draw input playback progress bar.
+            if (inputrec_state == 2){
+                draw_rectangle(fb, 0, 230, (inputrec_idx * 320 / sizeof(input_records)) , 240);
+            }
+            
             break;
         case INGAME_OVERLAY_VOLUME:
             level = odroid_audio_volume_get();
@@ -1449,7 +1473,8 @@ void common_ingame_overlay(void) {
     }
 }
 
-static void set_ingame_overlay(ingame_overlay_t type){
+//static void set_ingame_overlay(ingame_overlay_t type){
+void set_ingame_overlay(ingame_overlay_t type){
     common_emu_state.overlay = type;
     common_emu_state.last_overlay_time = get_elapsed_time();
 }

@@ -600,12 +600,15 @@ void watch_on_off(void){
 extern int inputrec_state;
 extern uint8_t input_records[GW_LCD_WIDTH * GW_LCD_HEIGHT];
 
-extern uint8_t inputrec_buffer[8192];
+extern uint8_t inputrec_buffer[4096];
+
+extern int inputrec_page;
 
 void stop_recording(void){
     if (inputrec_state == 1){
         inputrec_state = 0;
-        store_save((uint8_t *) input_records, (uint8_t *) inputrec_buffer, sizeof(input_records));
+        //store_save((uint8_t *) input_records, (uint8_t *) inputrec_buffer, sizeof(input_records));
+        store_save((uint8_t *) input_records + (sizeof(inputrec_buffer) * inputrec_page), (uint8_t *) inputrec_buffer, sizeof(inputrec_buffer));
         odroid_system_switch_app(0);
     }
 }
